@@ -5,10 +5,10 @@ const router = express.Router();
 const homecontroller = require('../controllers/home_controller');
 console.log('router loaded');
 
-router.get('/', homecontroller.home);
+router.get('/', homecontroller.home); //path,callback - define a route for http get requests
 // yeh common file hai yha tak aayega uske baad users type kara hoga toh vha bhej denge
 router.use('/users', require('./users'));
-
+//common path ke liye use kra and uske aage ke routes users.js me aage ka route define kra
 // for any further routes, access from here
 // router.use('/routerName', require('./routerfile'));
 

@@ -1,9 +1,17 @@
 const express = require('express');
 const app= express();
 const port = 8000;
+const expresslayouts = require('express-ejs-layouts');
+app.use(express.static('./assets'))
+app.use(expresslayouts );
+//  extract style and scripts from sub pages into the layout
+app.set("layout extractStyles", true);
+app.set("layout extractScripts", true);
 
 // use express router
 app.use('/', require('./routes'));
+// it assumes that there is an index.js file inside the routes directly.
+// when you require a directory, Node.js will automatically look for an index.js file
 //common hai isliye routes me bhej diya
 
 app.set('view engine', 'ejs');
