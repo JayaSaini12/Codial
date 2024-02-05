@@ -1,19 +1,23 @@
 const passport = require('passport');
-const User = require('../models/user');
 const LocalStrategy = require('passport-local').Strategy;
+const User = require('../models/user');
+
 
 //middleware passport.authen is using ths straty in index.js
 passport.use(new LocalStrategy({
-    usernameField: 'email'
+    usernameField: 'email',
+    passReqToCallback: true
     },
-    function(email, password, done){
+    function(req, email, password, done){
         User.findOne({email: email}, function(err, user){
             if(err){
-                console.log('Error in finding user --> Parrport');
+                req.flash('error', err);
+                // console.log('Error in finding user --> Parrport');
                 return done(err); //takes 2 argument
             }
             if (!user || user.password !=password){
-                console.log('Invalid Username/Password');
+                req.flash('error', 'Invalid username/Password');
+                // console.log('Invalid Username/Password'); 
                 return done(null, false);
             }
             return done(null, user);//if found user will return 
@@ -32,7 +36,7 @@ passport.deserializeUser(function(id,done){
                 console.log('Error in finding user --> Parrport');
                 return done(err); //takes 2 argument
     }
-    return done(null, user.id);
+    return done(null, user);
 });
 });
 //deserialize finds out which user is using
@@ -50,7 +54,7 @@ passport.checkAuthentication=function(req,res,next){
 }
 
 passport.setAuthenticatedUser=function(req,res,next){
-    if(req.isAuthenticated){
+    if(req.isAuthenticated()){
         //req.user contains current signed in user from the session cookie we are sending now to the lcoals for the views
         res.locals.user=req.user;
     }

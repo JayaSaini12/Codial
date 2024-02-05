@@ -1,4 +1,5 @@
 const express = require("express");
+const env=require('./config/environment');
 const app = express();
 const port = 2000;
 const db = require("./config/mongoose");
@@ -8,22 +9,39 @@ const cookieParser = require("cookie-parser");
 const session = require('express-session');
 const passport = require('passport');
 const passport_local = require('./config/passport_local');
+const passportJWT=require('./config/passport-jwt-strategy');
+const passportGoogle=require("./config/passport-google-oauth2-strategy");
+
 const MongoStore=require('connect-mongo')(session);//to permanently store session like after refresh  it should not go out
 const saasMiddleware=require('node-sass-middleware');
+const flash = require('connect-flash');
+const customware = require('./config/middleware');
+
+//setup the chat server to be used with socket.io
+const chatServer=require('http').Server(app);
+const chatSockets=require('./config/chat_sockets').chatSocket(chatServer);
+chatServer.listen(4000);
+console.log('chat server is listening on port 5000');
+const path=require('path');
 
 
 app.use(saasMiddleware({
-  src:'./assets/scss',
-  dest:'./assets/css',
+  src:path.join(__dirname,env.asset_path,'/scss'),
+  dest:path.join(__dirname,env.asset_path,'/css'),
   debug:true,
   outputStyle:'extended',
   prefix:'/css'//where should sever look for css files
 }));//before other use as we want template earlier
-
-app.use(express.static("./assets"));
-app.use(expresslayouts);
 app.use(express.urlencoded());
 app.use(cookieParser());
+app.use(express.static(env.asset_path));
+
+// app.use(express.static());
+//make the uploads path available to the browser
+app.use("/upload",express.static(__dirname+"/uplaods"));
+app.use(expresslayouts);
+
+
 //  extract style and scripts from sub pages into the layout
 app.set("layout extractStyles", true);
 app.set("layout extractScripts", true);
@@ -41,7 +59,7 @@ app.set("views", "./views");
 app.use(session({
   name: 'codeial',
   // Todo change the secret before deployment in profuction code
-  secret: 'blahsomething',//this key is used to encrpt the identity of key
+  secret: env.session_cookie_key,//this key is used to encrpt the identity of key
   saveUninitialized: false,
   resave: false,
   cookie: {
@@ -64,6 +82,8 @@ app.use(passport.session());
 
 app.use(passport.setAuthenticatedUser);
 
+app.use(flash());
+app.use(customware.setFlash);
 // use express router
 app.use("/", require("./routes"));
 
